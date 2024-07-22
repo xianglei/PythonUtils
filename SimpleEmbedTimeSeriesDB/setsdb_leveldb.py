@@ -74,21 +74,32 @@ class TimeSeriesDB:
         else:
             raise KeyError(f"Data point for metric '{metric}' at timestamp '{timestamp}' not found.")
 
-    def query_range(self, metric, start_timestamp, end_timestamp, tags):
+    def query_range(self, metric, start_timestamp, end_timestamp, tags=None):
         results = []
         for key, _ in self.index_db.RangeIter():
             k_metric, k_timestamp, k_tags = key.decode('utf-8').split(':', 2)
             k_timestamp = int(k_timestamp)
             k_tags = json.loads(k_tags)
-            if (k_metric == metric and start_timestamp <= k_timestamp <= end_timestamp and
-                    all(item in k_tags.items() for item in tags.items())):
-                value = self.get_data_point(k_metric, k_timestamp)
-                results.append({
-                    'metric': k_metric,
-                    'timestamp': k_timestamp,
-                    'value': value,
-                    'tags': k_tags
-                })
+            if tags is not None:
+                if (k_metric == metric and start_timestamp <= k_timestamp <= end_timestamp and
+                        all(item in k_tags.items() for item in tags.items())):
+                    value = self.get_data_point(k_metric, k_timestamp)
+                    results.append({
+                        'metric': k_metric,
+                        'timestamp': k_timestamp,
+                        'value': value,
+                        'tags': k_tags
+                    })
+            else:
+                if k_metric == metric and start_timestamp <= k_timestamp <= end_timestamp:
+                    value = self.get_data_point(k_metric, k_timestamp)
+                    results.append({
+                        'metric': k_metric,
+                        'timestamp': k_timestamp,
+                        'value': value,
+                        'tags': k_tags
+                    })
+
         return results
 
     def query_by_tags(self, metric, tags):

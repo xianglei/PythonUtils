@@ -1,1 +1,2 @@
 leveldb==0.201
+plyvel==1.5.1
